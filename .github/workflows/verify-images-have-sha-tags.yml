@@ -21,10 +21,10 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.18.7'
-      - name: Setup Minikube
+      - name: Setup Prereqs
         run: |
-          apt-get update 
-          apt-get install -y git 
+          # apt-get update 
+          # apt-get install -y git 
           git clone git@github.com:VedantMahabaleshwarkar/kube-linter.git
           cd kube-linter 
           make build 
@@ -32,8 +32,3 @@ jobs:
       - name: Run linter
         run: |
           kube-linter lint config/dependencies/quickstart.yaml
-
-
-
-
-            
