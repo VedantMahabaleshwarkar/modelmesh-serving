@@ -1,0 +1,39 @@
+name: Verify Images have SHA tags
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'test'
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!.tekton/**'
+      - '!docs/**'
+      - '!**.md'
+      - '.github/workflows/verify-images-have-sha-tags.yml'
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.18.7'
+      - name: Setup Minikube
+        run: |
+          apt-get update 
+          apt-get install -y git 
+          git clone git@github.com:VedantMahabaleshwarkar/kube-linter.git
+          cd kube-linter 
+          make build 
+          sudo cp bin/linux/kube-linter /usr/local/bin/minikube
+      - name: Run linter
+        run: |
+          kube-linter lint config/dependencies/quickstart.yaml
+
+
+
+
+            
