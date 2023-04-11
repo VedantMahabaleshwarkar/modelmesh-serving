@@ -31,4 +31,4 @@ jobs:
           # sudo cp bin/linux/kube-linter /usr/local/bin/minikube
       - name: Run linter
         run: |
-          kube-linter lint config/dependencies/quickstart.yaml
+          kube-linter lint .
