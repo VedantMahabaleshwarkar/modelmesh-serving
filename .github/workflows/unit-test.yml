@@ -19,4 +19,4 @@ jobs:
       - name: Build develop image
         run: make build.develop
       - name: Run unit tests
-        run: ./scripts/develop.sh make test
+        run: ./scripts/develop.sh make test       
