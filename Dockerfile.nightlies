@@ -15,6 +15,10 @@
 ###############################################################################
 # Create the develop, test, and build environment
 ###############################################################################
+# Build arguments
+ARG SOURCE_CODE=.
+ARG CI_CONTAINER_VERSION="unknown"
+
 FROM registry.access.redhat.com/ubi8/go-toolset:1.19 as baseimage
 
 # https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
@@ -40,9 +44,9 @@ ENV HOME=/go
 # ENV SOURCE_CODE=${REMOTE_SOURCE}/app
 # ## CPaaS CODE END ##
 
-COPY ${SOURCE_CODE} /go/src/github.com/opendatahub-io/modelmesh-serving/
+COPY ${SOURCE_CODE} /workspace
 
-WORKDIR /go/src/github.com/opendatahub-io/modelmesh-serving/
+WORKDIR /workspace
 
 # Install build and dev tools
 RUN --mount=type=cache,target=${HOME}/.cache/dnf:rw \
@@ -120,7 +124,7 @@ RUN true \
     && true
 
 # For GitHub Action 'lint', work around error "detected dubious ownership in repository at '/workspace'"
-RUN git config --system --add safe.directory /go/src/github.com/opendatahub-io/modelmesh-serving
+RUN git config --system --add safe.directory /workspace
 
 # The ubi/go-toolset image doesn't define ENTRYPOINT or CMD, but we need it to run 'make develop'
 CMD /bin/bash
