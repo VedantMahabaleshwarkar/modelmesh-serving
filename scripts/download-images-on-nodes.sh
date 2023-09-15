@@ -1,27 +1,55 @@
-TRITON_SERVER=nvcr.io/nvidia/tritonserver:23.04-py3
-ML_SERVER=seldonio/mlserver:1.3.2 
-OPENVINO=openvino/model_server:2022.3 
-TORCHSERVE=pytorch/torchserve:0.7.1-cpu
-MODELMESH=kserve/modelmesh:v0.11.0 
-MODELMESH_RUNTIME=kserve/modelmesh-runtime-adapter:v0.11.0
-REST_PROXY=kserve/rest-proxy:v0.11.0
+#TRITON_SERVER=nvcr.io/nvidia/tritonserver:23.04-py3
+#ML_SERVER=seldonio/mlserver:1.3.2 
+#OPENVINO=openvino/model_server:2022.3 
+#TORCHSERVE=pytorch/torchserve:0.7.1-cpu
+export SCRIPT_DIR=$(dirname "$(realpath "$0")")
+export RUNTIME_DIR=${SCRIPT_DIR}/../config/runtimes
+export DEFAULT_DIR=${SCRIPT_DIR}/../config/default
 
-# TODO - automation
-# TRITON_SERVER_IMG=nvcr.io/nvidia/tritonserver
-# ML_SERVER_IMG=seldonio/mlserver
-# TORCHSERVE_IMG=pytorch/torchserve
-# OPENVINO_IMG=openvino/model_server
+# automation
+MODELMESH_NAME=$(cat ${DEFAULT_DIR}/config-defaults.yaml |grep modelMeshImage -A1|grep "name"|cut -d: -f2|tr -d " ")
+MODELMESH_RUNTIME_NAME=$(cat ${DEFAULT_DIR}/config-defaults.yaml |grep storageHelperImage -A1|grep "name"|cut -d: -f2|tr -d " ")
+REST_PROXY_NAME=$(cat ${DEFAULT_DIR}/config-defaults.yaml |grep restProxy -A4|grep "name"|cut -d: -f2|tr -d " ")
 
-# TRITON_SERVER_TAG=$(cat ../config/runtimes/kustomization.yaml |grep ${TRITON_SERVER_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d " ")
-# ML_SERVER_TAG=$(cat ../config/runtimes/kustomization.yaml |grep ${ML_SERVER_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d " ")
-# TORCHSERVE_TAG=$(cat ../config/runtimes/kustomization.yaml |grep ${TORCHSERVE_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d " ")
-# OPENVINO_TAG=$(cat ../config/runtimes/kustomization.yaml |grep ${OPENVINO_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d " ")
+MODELMESH_TAG=$(cat ${DEFAULT_DIR}/config-defaults.yaml |grep modelMeshImage -A2|grep "tag"|cut -d: -f2|tr -d " ")
+MODELMESH_RUNTIME_TAG=$(cat ${DEFAULT_DIR}/config-defaults.yaml |grep storageHelperImage -A2|grep "tag"|cut -d: -f2|tr -d " ")
+REST_PROXY_TAG=$(cat ${DEFAULT_DIR}/config-defaults.yaml |grep restProxy -A5|grep "tag"|cut -d: -f2|tr -d " ")
 
-# export TRITON_SERVER=${TRITON_SERVER_IMG}:${TRITON_SERVER_TAG}
-# export ML_SERVER=${ML_SERVER_IMG}:${ML_SERVER_TAG}
-# export TORCHSERVE=${TORCHSERVE_IMG}:${TORCHSERVE_TAG}
-# export OPENVINO=${OPENVINO_IMG}:${OPENVINO_TAG}
+MODELMESH=${MODELMESH_NAME}:${MODELMESH_TAG}
+MODELMESH_RUNTIME=${MODELMESH_RUNTIME_NAME}:${MODELMESH_RUNTIME_TAG}
+REST_PROXY=${REST_PROXY_NAME}:${REST_PROXY_TAG}
 
+echo ${MODELMESH}
+echo $MODELMESH_RUNTIME
+echo $REST_PROXY
+
+echo $SCRIPT_DIR
+echo $RUNTIME_DIR
+TRITON_SERVER_IMG_NAME=tritonserver
+ML_SERVER_IMG_NAME=mlserver
+TORCHSERVE_IMG_NAME=torchserve
+OPENVINO_IMG_NAME=model_server
+
+TRITON_SERVER_IMG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${TRITON_SERVER_IMG_NAME} -A1|grep "newName"|cut -d: -f2|tr -d " ")
+ML_SERVER_IMG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${ML_SERVER_IMG_NAME} -A1|grep "newName"|cut -d: -f2|tr -d " ")
+TORCHSERVE_IMG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${TORCHSERVE_IMG_NAME} -A1|grep "newName"|cut -d: -f2|tr -d " ")
+OPENVINO_IMG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${OPENVINO_IMG_NAME} -A1|grep "newName"|cut -d: -f2|tr -d " ")
+
+TRITON_SERVER_TAG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${TRITON_SERVER_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d '"'|tr -d " ")
+ML_SERVER_TAG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${ML_SERVER_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d '"'|tr -d " ")
+TORCHSERVE_TAG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${TORCHSERVE_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d '"'|tr -d " ")
+OPENVINO_TAG=$(cat ${RUNTIME_DIR}/kustomization.yaml |grep ${OPENVINO_IMG} -A1|grep "newTag"|cut -d: -f2|tr -d '"'|tr -d " ")
+
+export TRITON_SERVER=${TRITON_SERVER_IMG}:${TRITON_SERVER_TAG}
+export ML_SERVER=${ML_SERVER_IMG}:${ML_SERVER_TAG}
+export TORCHSERVE=${TORCHSERVE_IMG}:${TORCHSERVE_TAG}
+export OPENVINO=${OPENVINO_IMG}:${OPENVINO_TAG}
+
+# Debug purpose
+# echo ${TRITON_SERVER}
+# echo ${ML_SERVER}
+# echo ${TORCHSERVE}
+# echo ${OPENVINO}
 images=(${TRITON_SERVER} ${ML_SERVER} ${OPENVINO} ${TORCHSERVE} ${MODELMESH} ${MODELMESH_RUNTIME} ${REST_PROXY})
 
 wait_downloading_images(){
@@ -47,7 +75,7 @@ wait_downloading_images(){
                 echo "triton-server-count count: ${triton_server_count}"
             fi 
             ;;
-        *openvino*)
+        *model_server*)
             isDownloaded=$(oc describe pod -l app=image-downloader|grep "Successfully pulled image \"${OPENVINO}\""|wc -l)
             existImage=$(oc describe pod -l app=image-downloader|grep "Container image \"${OPENVINO}\" already present on machine"|wc -l)
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
@@ -107,7 +135,7 @@ wait_downloading_images(){
             fi
             ;;
         *)
-          echo "Not expected images"
+		echo "Not expected images(${element})"
           exit 1
           ;;
       esac
