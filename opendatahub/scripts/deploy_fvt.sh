@@ -67,6 +67,10 @@ while (($# > 0)); do
   shift
 done    
 
+if [[ ${tag} == "stable" ]];then
+  stable_manifests=true
+fi
+
 info ".. Downloading kustomize"
 if [[ ! -d ${ROOT_DIR}/bin ]]; then
   info ".. Creating a bin folder"
@@ -101,8 +105,9 @@ if [[ ! -d $MANIFESTS_DIR/fvt ]] || [[ ${force} == "true" ]];then
   cp -R $MANIFESTS_DIR/fvt_templates $MANIFESTS_DIR/fvt
   cp -R $ODH_MANIFESTS_DIR/${target_modelmesh_dir}/odh-modelmesh-controller/dependencies/* $MANIFESTS_DIR/fvt/.
   # Convert imaes to use quay.io image (avoid dockerhub pull limit)
-  sed 's+kserve/modelmesh-minio-dev-examples:latest+quay.io/jooholee/minio-examples:latest+g' -i opendatahub/scripts/manifests/fvt/fvt.yaml
-  sed 's+kserve/modelmesh-minio-examples:latest+quay.io/jooholee/minio-examples:latest+g' -i opendatahub/scripts/manifests/fvt/fvt.yaml
+  minio_tag=$(grep kserve/modelmesh-minio-dev-examples opendatahub/scripts/manifests/fvt/fvt.yaml |cut -d: -f3)
+  sed "s+kserve/modelmesh-minio-dev-examples:${minio_tag}+quay.io/jooholee/modelmesh-minio-dev-examples:${minio_tag}+g" -i opendatahub/scripts/manifests/fvt/fvt.yaml
+  sed "s+kserve/modelmesh-minio-examples:${minio_tag}+quay.io/jooholee/modelmesh-minio-examples:${minio_tag}+g" -i opendatahub/scripts/manifests/fvt/fvt.yaml
   sed 's+ubuntu+quay.io/fedora/fedora:38+g' -i opendatahub/scripts/manifests/fvt/fvt.yaml
 fi
 

@@ -24,19 +24,6 @@ export MODELMESH=$(cat $MANIFESTS_DIR/params.env |grep odh-modelmesh=|cut -d= -f
 export MODELMESH_RUNTIME=$(cat $MANIFESTS_DIR/params.env |grep odh-modelmesh-runtime-adapter=|cut -d= -f2)
 export REST_PROXY=$(cat $MANIFESTS_DIR/params.env |grep odh-mm-rest-proxy=|cut -d= -f2)
 
-# You can choose fast/stable for image tag to test easily
-if [[ ${tag} == "fast" ]]; then
-  info ".. TAG=fast is set"
-  export MODELMESH=quay.io/opendatahub/modelmesh:fast
-  export MODELMESH_RUNTIME=quay.io/opendatahub/modelmesh-runtime-adapter:fast
-  export REST_PROXY=quay.io/opendatahub/rest-proxy:fast
-elif [[ ${tag} == "stable" ]]; then
-  info ".. TAG=stable is set"
-  export MODELMESH=quay.io/opendatahub/modelmesh:stable
-  export MODELMESH_RUNTIME=quay.io/opendatahub/modelmesh-runtime-adapter:stable
-  export REST_PROXY=quay.io/opendatahub/rest-proxy:stable
-fi
-
 # You can set custom image for comoponents
 if [[ z${img_name} != z ]]; then
   case $img_name in

@@ -13,15 +13,15 @@ spec:
     - kustomizeConfig:
         parameters:
           - name: odh-mm-rest-proxy
-            value: quay.io/opendatahub/rest-proxy:stable
+            value: quay.io/opendatahub/rest-proxy:v0.11.0
           - name: odh-modelmesh-runtime-adapter
-            value: quay.io/opendatahub/modelmesh-runtime-adapter:stable
+            value: quay.io/opendatahub/modelmesh-runtime-adapter:v0.11.0
           - name: odh-modelmesh
-            value: quay.io/opendatahub/modelmesh:stable
+            value: quay.io/opendatahub/modelmesh:v0.11.0
           - name: odh-modelmesh-controller
-            value: quay.io/opendatahub/modelmesh-controller:stable
+            value: quay.io/opendatahub/modelmesh-controller:v0.11.0
           - name: odh-model-controller
-            value: quay.io/opendatahub/odh-model-controller:stable
+            value: quay.io/opendatahub/odh-model-controller:v0.11.0
           - name: monitoring-namespace
             value: %controller-namespace%
         repoRef:
