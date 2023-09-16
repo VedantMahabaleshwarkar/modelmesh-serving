@@ -118,7 +118,7 @@ wait_downloading_images(){
   expectedTotalCount=$((${#images[@]}*${nodeCount}))
   totalCount=0
   retries=0
-  max_retries=20
+  max_retries=10
   echo "Node: ${nodeCount}, Required Images: ${#images[@]}, Expected Downloading Count: ${expectedTotalCount}"
 
   sleep 10s
@@ -128,7 +128,6 @@ wait_downloading_images(){
     echo "Downloading required images.. please wait!"    
     for element in "${images[@]}"
     do
-     retries=$((retries + 1 ))
       case "$element" in
         *triton*)
             isDownloaded=$(oc describe pod -n $namespace -l app=image-downloader|grep "Successfully pulled image \"${TRITON_SERVER}\""|wc -l)
@@ -139,7 +138,7 @@ wait_downloading_images(){
                 echo "triton-server-count count: ${triton_server_count} - ${element}"
             fi 
             ;;
-        *openvino*)
+        *model_server*)
             isDownloaded=$(oc describe pod -n $namespace -l app=image-downloader|grep "Successfully pulled image \"${OPENVINO}\""|wc -l)
             existImage=$(oc describe pod -n $namespace -l app=image-downloader|grep "Container image \"${OPENVINO}\" already present on machine"|wc -l)
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
@@ -164,7 +163,7 @@ wait_downloading_images(){
             existImage=$(oc describe pod -n $namespace -l app=image-downloader|grep "Container image \"${TORCHSERVE}\" already present on machine"|wc -l)
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 torchserve_count=$(( ${isDownloaded} + ${existImage} ))
-                totalCount=$((totalCount + ${ml_server_count} ))
+                totalCount=$((totalCount + ${torchserve_count} ))
                 echo "torchserve downloaded: ${torchserve_count} - ${element}"
             fi
             ;;
@@ -208,20 +207,28 @@ wait_downloading_images(){
             fi
             ;;
         *)
-          echo "Not expected images"
+          echo "Not expected images(${element})"
           exit 1
           ;;
       esac
     done
-    if [[ $totalCount -lt $expectedTotalCount ]] && [[ ${retries} -lt ${max_retries} ]]; then
-      echo 
-      echo "Reset totalCount = 0 and checking it again after 60s"
-      sleep 60s
+    # echo "2- $totalCount"
+    # echo "3- $expectedTotalCount"
+    # echo "4- $retries"
+    # echo "5- $max_retries"
+
+    if [[ $totalCount -lt $expectedTotalCount ]]; then
+      if [[ ${retries} -lt ${max_retries} ]]; then
+        echo 
+        retries=$((retries + 1 ))
+        echo "Reset totalCount = 0 and checking it again after 60s"
+        sleep 60s
+      else 
+        echo "Exceed max retries(${max_retries})"
+        return 1
+      fi
+    else
+      echo "All images are downloaded"
     fi
   done
-  if [[ ${retries} -lt ${max_retries} ]]; then
-    echo "All images are downloaded"
-  else 
-    echo "Exceed max retries(${max_retries})"
-  fi
 }

@@ -56,6 +56,8 @@ wait_downloading_images(){
   nodeCount=$(oc get node|grep worker|grep -v infra|wc -l)
   expectedTotalCount=$((${#images[@]}*${nodeCount}))
   totalCount=0
+  retries=0
+  max_retries=10
   echo "Node: ${nodeCount}, Required Images: ${#images[@]}, Expected Downloading Count: ${expectedTotalCount}"
 
   sleep 10s
@@ -72,7 +74,7 @@ wait_downloading_images(){
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 triton_server_count=$(( ${isDownloaded} + ${existImage} ))
                 totalCount=$((totalCount + ${triton_server_count}))
-                echo "triton-server-count count: ${triton_server_count}"
+                echo "triton-server-count count: ${triton_server_count} - ${element}"
             fi 
             ;;
         *model_server*)
@@ -81,7 +83,7 @@ wait_downloading_images(){
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 openvino_count=$(( ${isDownloaded} + ${existImage} ))
                 totalCount=$((totalCount + ${openvino_count}))
-                echo "openvino downloaded: ${openvino_count}"
+                echo "openvino downloaded: ${openvino_count} - ${element}"
             fi
             ;;
 
@@ -91,7 +93,7 @@ wait_downloading_images(){
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 ml_server_count=$(( ${isDownloaded} + ${existImage} ))
                 totalCount=$((totalCount + ${ml_server_count} ))
-                echo "ml-server downloaded: ${ml_server_count}"
+                echo "ml-server downloaded: ${ml_server_count} - ${element}"
             fi
             ;;
 
@@ -100,8 +102,8 @@ wait_downloading_images(){
             existImage=$(oc describe pod -l app=image-downloader|grep "Container image \"${TORCHSERVE}\" already present on machine"|wc -l)
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 torchserve_count=$(( ${isDownloaded} + ${existImage} ))
-                totalCount=$((totalCount + ${ml_server_count} ))
-                echo "torchserve downloaded: ${torchserve_count}"
+                totalCount=$((totalCount + ${torchserve_count} ))
+                echo "torchserve downloaded: ${torchserve_count} - ${element}"
             fi
             ;;
 
@@ -111,7 +113,7 @@ wait_downloading_images(){
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 modelmesh_count=$(( ${isDownloaded} + ${existImage} ))
                 totalCount=$((totalCount + ${modelmesh_count}))
-                echo "modelmesh downloaded: ${modelmesh_count}"
+                echo "modelmesh downloaded: ${modelmesh_count} - ${element}"
             fi
             ;;
 
@@ -121,7 +123,7 @@ wait_downloading_images(){
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 modlemesh_runtime_count=$(( ${isDownloaded} + ${existImage} ))
                 totalCount=$((totalCount + ${modlemesh_runtime_count} ))
-                echo "modelmesh-runtime downloaded: ${modlemesh_runtime_count}"
+                echo "modelmesh-runtime downloaded: ${modlemesh_runtime_count} - ${element}"
             fi
             ;;
 
@@ -131,24 +133,35 @@ wait_downloading_images(){
             if [[ ${isDownloaded} != 0 || ${existImage} != 0 ]]; then
                 rest_proxy_count=$(( ${isDownloaded} + ${existImage} ))
                 totalCount=$((totalCount + ${rest_proxy_count} ))
-                echo "rest-proxy downloaded: ${rest_proxy_count}"
+                echo "rest-proxy downloaded: ${rest_proxy_count} - ${element}"
             fi
             ;;
         *)
-		echo "Not expected images(${element})"
+		      echo "Not expected images(${element})"
           exit 1
           ;;
       esac
     done
-    if [[ $totalCount != $expectedTotalCount ]]; then
-      echo 
-      echo "Reset totalCount = 0 and checking it again after 60s"
-      sleep 60s
+
+    # echo "2- $totalCount"
+    # echo "3- $expectedTotalCount"
+    # echo "4- $retries"
+    # echo "5- $max_retries"
+    if [[ $totalCount -lt $expectedTotalCount ]]; then
+      if [[ ${retries} -lt ${max_retries} ]]; then
+        echo 
+        retries=$((retries + 1 ))
+        echo "Reset totalCount = 0 and checking it again after 60s"
+        sleep 60s
+      else 
+        echo "[INFO] Exceed max retries(${max_retries}) to downloaded so it will move on next step"
+        break
+      fi
+    else
+      echo "[SUCCESS] Downloaded necessary images on all nodes"
     fi
   done
-  echo "All images are downloaded"
 }
-
 cat <<EOF | oc apply -f -
 apiVersion: apps/v1
 kind: DaemonSet
