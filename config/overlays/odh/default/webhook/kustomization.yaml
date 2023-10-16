@@ -18,3 +18,6 @@ resources:
 
 configurations:
   - kustomizeconfig.yaml
+
+commonAnnotations:
+  service.beta.openshift.io/inject-cabundle: "true"

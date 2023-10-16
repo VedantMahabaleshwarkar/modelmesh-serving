@@ -34,8 +34,7 @@ spec:
 
   containers:
     - name: ovms
-     # OpenDataHub Override : ODH uses the OVMS image defined in params.env
-      image: $(odh-openvino)
+      image: ovms-1:replace
       args:
         - --port=8001
         - --rest_port=8888

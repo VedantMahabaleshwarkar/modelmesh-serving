@@ -11,10 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-resources:
-  - manifests.yaml
-  - service.yaml
+# the following config is for teaching kustomize where to look at when substituting vars.
+# It requires kustomize v2.1.0 or newer to work properly.
+nameReference:
+  - kind: Service
+    version: v1
+    fieldSpecs:
+      - kind: ValidatingWebhookConfiguration
+        group: admissionregistration.k8s.io
+        path: webhooks/clientConfig/service/name
 
-configurations:
-  - kustomizeconfig.yaml
+namespace:
+  - kind: ValidatingWebhookConfiguration
+    group: admissionregistration.k8s.io
+    path: webhooks/clientConfig/service/namespace
+    create: true
+
+varReference:
+  - path: metadata/annotations
