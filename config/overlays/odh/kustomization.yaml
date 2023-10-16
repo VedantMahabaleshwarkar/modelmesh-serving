@@ -4,7 +4,11 @@ kind: Kustomization
 resources:
   - ../../crd
   - ../../prometheus
-  - ./default
+  - ./manager
+  - ./webhook
+  - ./scripts
+  - ./quickstart.yaml
+  - ./rbac
 
 namespace: opendatahub
 configMapGenerator:
@@ -58,6 +62,12 @@ vars:
       kind: ConfigMap
       name: mesh-parameters
 
+commonLabels:
+  app: model-mesh
+  app.kubernetes.io/part-of: model-mesh
 
 patchesStrategicMerge:
-  - ./patches/clusterservingruntime_patch_delete.yaml
+  - ./crd/clusterservingruntime_patch_delete.yaml
+
+configurations:
+  - params.yaml
