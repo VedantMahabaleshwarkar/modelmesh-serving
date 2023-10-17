@@ -17,10 +17,7 @@ configMapGenerator:
     name: mesh-parameters
 generatorOptions:
   disableNameSuffixHash: true
-
-transformers:
-  - ./default/metadataLabelTransformer.yaml
-
+  
 vars:
   - fieldref:
       fieldPath: metadata.namespace
